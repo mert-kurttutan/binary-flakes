@@ -1,4 +1,4 @@
-# binary-flake
+# binary-flakes
 
 Nix packages for prebuilt binary releases, with release metadata and update
 automation written in modular Nushell.
