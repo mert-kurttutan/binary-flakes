@@ -1,6 +1,8 @@
 name: Watch and release binary assets
 
 on:
+  push:
+    branches: [main]
   schedule:
     - cron: "17 * * * *"
   workflow_dispatch:
@@ -42,7 +44,7 @@ jobs:
         run: nix profile install nixpkgs#nushell
       - name: Check upstream release
         id: check
-        if: github.event_name == 'schedule' || inputs.package == 'all' || inputs.package == matrix.package
+        if: github.event_name != 'workflow_dispatch' || inputs.package == 'all' || inputs.package == matrix.package
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REQUESTED_VERSION: ${{ inputs.version }}
