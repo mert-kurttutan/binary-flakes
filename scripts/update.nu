@@ -1,7 +1,7 @@
 #!/usr/bin/env nu
 
 use lib/common.nu [current-version ensure-repository-root]
-use lib/github.nu [latest-manifest-version latest-tag]
+use lib/packages.nu [package-config target-version tar-sources]
 use lib/nix.nu [replace-binding-hash replace-map-hash replace-version]
 
 const CODEX_PLATFORM = "x86_64-unknown-linux-musl"
@@ -13,14 +13,9 @@ def main [
   --check
 ] {
   ensure-repository-root
-  if $package not-in [codex obsidian] { error make $"Unknown package: ($package)" }
-  let file = if $package == "codex" { "codex.nix" } else { "obsidian.nix" }
+  let file = (package-config $package).file
   let current = current-version $file
-  let target = if $version != "" { $version } else if $package == "codex" {
-    latest-tag openai/codex rust-v
-  } else {
-    latest-manifest-version "https://raw.githubusercontent.com/obsidianmd/obsidian-releases/master/desktop-releases.json" latestVersion
-  }
+  let target = target-version $package $version
   if $check {
     print $"current_version=($current)"
     print $"new_version=($target)"
@@ -36,8 +31,8 @@ def main [
     $content = replace-binding-hash $content native ($manifest.hashes | get $"codex-($CODEX_PLATFORM).zst")
     $content = replace-binding-hash $content host ($manifest.hashes | get $"codex-code-mode-host-($CODEX_PLATFORM).zst")
   } else {
-    for item in [{key: x86_64-linux, arch: x86_64} {key: aarch64-linux, arch: aarch64}] {
-      $content = replace-map-hash $content sources $item.key ($manifest.hashes | get $"obsidian-linux-($item.arch).tar.zst")
+    for item in (tar-sources $package $target) {
+      $content = replace-map-hash $content sources $"($item.arch)-linux" ($manifest.hashes | get $item.asset)
     }
   }
   $content | save --force $file

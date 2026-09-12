@@ -1,24 +1,16 @@
 #!/usr/bin/env nu
 
 use lib/common.nu [current-version ensure-repository-root]
-use lib/github.nu [latest-manifest-version latest-tag]
+use lib/packages.nu [package-config target-version]
 
 def main [
-  --package: string = "codex" # codex or obsidian
+  --package: string = "codex" # codex, obsidian, or zed
   --version: string = ""
 ] {
   ensure-repository-root
-  let config = {
-    codex: { file: "codex.nix", repository: "openai/codex", prefix: "rust-v" }
-    obsidian: { file: "obsidian.nix", repository: "obsidianmd/obsidian-releases", prefix: "v" }
-  }
-  let selected = ($config | get $package)
+  let selected = package-config $package
   let current = current-version $selected.file
-  let latest = if ($version | is-empty) {
-    if $package == "obsidian" {
-      latest-manifest-version "https://raw.githubusercontent.com/obsidianmd/obsidian-releases/master/desktop-releases.json" latestVersion
-    } else { latest-tag $selected.repository $selected.prefix }
-  } else { $version }
+  let latest = target-version $package $version
   print $"current_version=($current)"
   print $"new_version=($latest)"
   print $"update_needed=($current != $latest)"

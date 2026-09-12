@@ -11,6 +11,7 @@
       supportedSystems = [ "x86_64-linux" "aarch64-linux" ];
       overlay = final: prev: {
         obsidian = final.callPackage ./obsidian.nix { };
+        zed = final.callPackage ./zed.nix { };
       } // prev.lib.optionalAttrs (prev.stdenv.hostPlatform.system == "x86_64-linux") {
         codex = final.callPackage ./codex.nix { };
       };
@@ -26,6 +27,7 @@
         packages = {
           default = if system == "x86_64-linux" then pkgs.codex else pkgs.obsidian;
           obsidian = pkgs.obsidian;
+          zed = pkgs.zed;
         } // pkgs.lib.optionalAttrs (system == "x86_64-linux") { codex = pkgs.codex; };
 
         apps = {
@@ -34,6 +36,7 @@
           else
             { type = "app"; program = "${pkgs.obsidian}/bin/obsidian"; };
           obsidian = { type = "app"; program = "${pkgs.obsidian}/bin/obsidian"; };
+          zed = { type = "app"; program = "${pkgs.zed}/bin/zed"; };
         } // pkgs.lib.optionalAttrs (system == "x86_64-linux") {
           codex = { type = "app"; program = "${pkgs.codex}/bin/codex"; };
         };

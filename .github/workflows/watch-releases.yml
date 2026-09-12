@@ -10,7 +10,7 @@ on:
       package:
         description: "Package to refresh"
         type: choice
-        options: [all, codex, obsidian]
+        options: [all, codex, obsidian, zed]
         default: all
       version:
         description: "Version override (select one package)"
@@ -30,7 +30,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        package: [codex, obsidian]
+        package: [codex, obsidian, zed]
     concurrency:
       group: release-${{ matrix.package }}
       cancel-in-progress: false
@@ -72,6 +72,7 @@ jobs:
           nu scripts/update.nu --package "$PACKAGE" --version "$VERSION"
           nix-instantiate --parse codex.nix >/dev/null
           nix-instantiate --parse obsidian.nix >/dev/null
+          nix-instantiate --parse zed.nix >/dev/null
       - name: Publish compressed assets
         if: steps.check.outcome == 'success' && (steps.check.outputs.update_needed == 'true' || inputs.force)
         env:
@@ -89,10 +90,15 @@ jobs:
               .release-assets/codex-x86_64-unknown-linux-musl.zst \
               .release-assets/codex-code-mode-host-x86_64-unknown-linux-musl.zst \
               --repo "$GITHUB_REPOSITORY"
-          else
+          elif [ "$PACKAGE" = obsidian ]; then
             gh release upload "$tag" \
               .release-assets/obsidian-linux-x86_64.tar.zst \
               .release-assets/obsidian-linux-aarch64.tar.zst \
+              --repo "$GITHUB_REPOSITORY"
+          else
+            gh release upload "$tag" \
+              .release-assets/zed-linux-x86_64.tar.zst \
+              .release-assets/zed-linux-aarch64.tar.zst \
               --repo "$GITHUB_REPOSITORY"
           fi
       - name: Verify Linux package
@@ -104,8 +110,10 @@ jobs:
           nix flake check
           if [ "$PACKAGE" = codex ]; then
             nix build .#codex --no-link
-          else
+          elif [ "$PACKAGE" = obsidian ]; then
             nix build .#obsidian --no-link
+          else
+            nix build .#zed --no-link
           fi
       - name: Open package update PR
         if: steps.check.outcome == 'success' && (steps.check.outputs.update_needed == 'true' || inputs.force)

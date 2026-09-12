@@ -1,6 +1,7 @@
 #!/usr/bin/env nu
 
 use lib/common.nu [require-command]
+use lib/packages.nu [package-config tar-sources]
 
 const CODEX_PLATFORM = "x86_64-unknown-linux-musl"
 
@@ -22,7 +23,7 @@ def main [
 ] {
   for command in [curl tar zstd nix mktemp] { require-command $command }
   if $version == "" { error make "Pass --version" }
-  if $package not-in [codex obsidian] { error make $"Unknown package: ($package)" }
+  package-config $package | ignore
   let output = ($output_dir | path expand)
   mkdir $output
   let work = (mktemp --directory | str trim)
@@ -37,12 +38,10 @@ def main [
         $hashes = ($hashes | upsert $name (^nix hash file $"($output)/($name)" | str trim))
       }
     } else {
-      let base = $"https://github.com/obsidianmd/obsidian-releases/releases/download/v($version)"
-      for item in [{arch: x86_64, source: $"obsidian-($version).tar.gz"} {arch: aarch64, source: $"obsidian-($version)-arm64.tar.gz"}] {
-        let name = $"obsidian-linux-($item.arch).tar.zst"
-        download $"($base)/($item.source)" $"($work)/($item.source)"
-        repack-tar $"($work)/($item.source)" $"($output)/($name)" $"($work)/($item.arch)"
-        $hashes = ($hashes | upsert $name (^nix hash file $"($output)/($name)" | str trim))
+      for item in (tar-sources $package $version) {
+        download $item.url $"($work)/($item.source)"
+        repack-tar $"($work)/($item.source)" $"($output)/($item.asset)" $"($work)/($item.arch)"
+        $hashes = ($hashes | upsert $item.asset (^nix hash file $"($output)/($item.asset)" | str trim))
       }
     }
     {package: $package, version: $version, hashes: $hashes} | to json | save --force $"($output)/manifest.json"
