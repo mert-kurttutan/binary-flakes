@@ -5,20 +5,19 @@ automation written in modular Nushell.
 
 Packages currently covered:
 
-- `codex`: OpenAI’s native Rust binary and its code-mode host (`.zst` assets)
-- `codex-node`: the Node.js distribution and platform dependency archives
+- `codex`: OpenAI’s native x86_64 Linux Rust binary and code-mode host (`.zst` assets)
 - `obsidian`: Linux desktop tarballs for x86_64 and aarch64
 
-The published flake outputs currently target `x86_64-linux` and
-`aarch64-linux`. Codex’s Darwin mappings remain in the package definition for
-a future Darwin-compatible nixpkgs input.
+Obsidian targets `x86_64-linux` and `aarch64-linux`; Codex targets only
+`x86_64-linux`. The default package is Codex on x86_64 and Obsidian on
+aarch64.
 
 The hourly workflow checks Codex and Obsidian independently with Nushell. For
 each new version it downloads upstream assets, publishes zstd-compressed files
 to this repository's `codex-vVERSION` or `obsidian-vVERSION` GitHub release,
 updates hashes in the package definition, verifies Linux builds, and opens an
-update pull request. Native Codex assets are already zstd-compressed upstream;
-the Node and Obsidian tarballs are repacked as `.tar.zst`.
+update pull request. Codex's two native assets are already zstd-compressed
+upstream; the Obsidian tarballs are repacked as `.tar.zst`.
 
 To backfill an unpublished current version, dispatch the workflow with `force` enabled.
 To select a specific version, choose one package in the dispatch form. Locally:

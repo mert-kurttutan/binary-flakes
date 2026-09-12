@@ -10,9 +10,9 @@
     let
       supportedSystems = [ "x86_64-linux" "aarch64-linux" ];
       overlay = final: prev: {
-        codex = final.callPackage ./codex.nix { runtime = "native"; };
-        codex-node = final.callPackage ./codex.nix { runtime = "node"; };
         obsidian = final.callPackage ./obsidian.nix { };
+      } // prev.lib.optionalAttrs (prev.stdenv.hostPlatform.system == "x86_64-linux") {
+        codex = final.callPackage ./codex.nix { };
       };
     in
     flake-utils.lib.eachSystem supportedSystems (system:
@@ -24,17 +24,18 @@
         };
       in {
         packages = {
-          default = pkgs.codex;
-          codex = pkgs.codex;
-          codex-node = pkgs.codex-node;
+          default = if system == "x86_64-linux" then pkgs.codex else pkgs.obsidian;
           obsidian = pkgs.obsidian;
-        };
+        } // pkgs.lib.optionalAttrs (system == "x86_64-linux") { codex = pkgs.codex; };
 
         apps = {
-          default = { type = "app"; program = "${pkgs.codex}/bin/codex"; };
-          codex = { type = "app"; program = "${pkgs.codex}/bin/codex"; };
-          codex-node = { type = "app"; program = "${pkgs.codex-node}/bin/codex-node"; };
+          default = if system == "x86_64-linux" then
+            { type = "app"; program = "${pkgs.codex}/bin/codex"; }
+          else
+            { type = "app"; program = "${pkgs.obsidian}/bin/obsidian"; };
           obsidian = { type = "app"; program = "${pkgs.obsidian}/bin/obsidian"; };
+        } // pkgs.lib.optionalAttrs (system == "x86_64-linux") {
+          codex = { type = "app"; program = "${pkgs.codex}/bin/codex"; };
         };
 
         devShells.default = pkgs.mkShell {

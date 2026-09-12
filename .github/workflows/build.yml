@@ -27,11 +27,13 @@ jobs:
         run: |
           set -euo pipefail
           nix flake check
-          nix build .#codex .#codex-node .#obsidian --no-link
+          nix build .#obsidian --no-link
+          if [ "$RUNNER_ARCH" = X64 ]; then
+            nix build .#codex --no-link
+          fi
       - name: Smoke test Codex launchers
+        if: matrix.runner == 'ubuntu-24.04'
         run: |
           set -euo pipefail
           native="$(nix build .#codex --no-link --print-out-paths)"
-          node="$(nix build .#codex-node --no-link --print-out-paths)"
           "$native/bin/codex" --version
-          "$node/bin/codex-node" --version

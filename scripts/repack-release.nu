@@ -2,8 +2,7 @@
 
 use lib/common.nu [require-command]
 
-const NATIVE = [aarch64-apple-darwin x86_64-apple-darwin x86_64-unknown-linux-musl aarch64-unknown-linux-musl]
-const NODE = [darwin-arm64 darwin-x64 linux-x64 linux-arm64]
+const CODEX_PLATFORM = "x86_64-unknown-linux-musl"
 
 def download [url: string, destination: string] {
   ^curl --fail --location --retry 3 --show-error --silent $url --output $destination
@@ -31,23 +30,11 @@ def main [
   try {
     if $package == "codex" {
       let base = $"https://github.com/openai/codex/releases/download/rust-v($version)"
-      for platform in $NATIVE {
-        for prefix in [codex codex-code-mode-host] {
-          let name = $"($prefix)-($platform).zst"
-          download $"($base)/($name)" $"($output)/($name)"
-          ^zstd --test $"($output)/($name)" | ignore
-          $hashes = ($hashes | upsert $name (^nix hash file $"($output)/($name)" | str trim))
-        }
-      }
-      let npm_name = $"codex-npm-($version).tar.zst"
-      download $"https://registry.npmjs.org/@openai/codex/-/codex-($version).tgz" $"($work)/npm.tgz"
-      repack-tar $"($work)/npm.tgz" $"($output)/($npm_name)" $"($work)/npm"
-      $hashes = ($hashes | upsert $npm_name (^nix hash file $"($output)/($npm_name)" | str trim))
-      for platform in $NODE {
-        let name = $"codex-npm-($platform)-($version)"
-        download $"($base)/($name).tgz" $"($work)/($name).tgz"
-        repack-tar $"($work)/($name).tgz" $"($output)/($name).tar.zst" $"($work)/($platform)"
-        $hashes = ($hashes | upsert $"($name).tar.zst" (^nix hash file $"($output)/($name).tar.zst" | str trim))
+      for prefix in [codex codex-code-mode-host] {
+        let name = $"($prefix)-($CODEX_PLATFORM).zst"
+        download $"($base)/($name)" $"($output)/($name)"
+        ^zstd --test $"($output)/($name)" | ignore
+        $hashes = ($hashes | upsert $name (^nix hash file $"($output)/($name)" | str trim))
       }
     } else {
       let base = $"https://github.com/obsidianmd/obsidian-releases/releases/download/v($version)"

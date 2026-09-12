@@ -4,8 +4,7 @@ use lib/common.nu [current-version ensure-repository-root]
 use lib/github.nu [latest-manifest-version latest-tag]
 use lib/nix.nu [replace-binding-hash replace-map-hash replace-version]
 
-const NATIVE = [aarch64-apple-darwin x86_64-apple-darwin x86_64-unknown-linux-musl aarch64-unknown-linux-musl]
-const NODE = [darwin-arm64 darwin-x64 linux-x64 linux-arm64]
+const CODEX_PLATFORM = "x86_64-unknown-linux-musl"
 
 def main [
   --package: string = "codex"
@@ -34,14 +33,8 @@ def main [
   }
   mut content = replace-version (open --raw $file) $target
   if $package == "codex" {
-    for platform in $NATIVE {
-      $content = replace-map-hash $content nativeHashes $platform ($manifest.hashes | get $"codex-($platform).zst")
-      $content = replace-map-hash $content codeModeHostHashes $platform ($manifest.hashes | get $"codex-code-mode-host-($platform).zst")
-    }
-    for platform in $NODE {
-      $content = replace-map-hash $content nodeOptionalDepHashes $platform ($manifest.hashes | get $"codex-npm-($platform)-($target).tar.zst")
-    }
-    $content = replace-binding-hash $content npm ($manifest.hashes | get $"codex-npm-($target).tar.zst")
+    $content = replace-binding-hash $content native ($manifest.hashes | get $"codex-($CODEX_PLATFORM).zst")
+    $content = replace-binding-hash $content host ($manifest.hashes | get $"codex-code-mode-host-($CODEX_PLATFORM).zst")
   } else {
     for item in [{key: x86_64-linux, arch: x86_64} {key: aarch64-linux, arch: aarch64}] {
       $content = replace-map-hash $content sources $item.key ($manifest.hashes | get $"obsidian-linux-($item.arch).tar.zst")

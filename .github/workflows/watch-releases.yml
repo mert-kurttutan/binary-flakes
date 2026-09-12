@@ -84,7 +84,17 @@ jobs:
           if ! gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release create "$tag" --repo "$GITHUB_REPOSITORY" --title "$tag" --notes "zstd-compressed $PACKAGE $VERSION binaries"
           fi
-          gh release upload "$tag" .release-assets/*.zst --repo "$GITHUB_REPOSITORY"
+          if [ "$PACKAGE" = codex ]; then
+            gh release upload "$tag" \
+              .release-assets/codex-x86_64-unknown-linux-musl.zst \
+              .release-assets/codex-code-mode-host-x86_64-unknown-linux-musl.zst \
+              --repo "$GITHUB_REPOSITORY"
+          else
+            gh release upload "$tag" \
+              .release-assets/obsidian-linux-x86_64.tar.zst \
+              .release-assets/obsidian-linux-aarch64.tar.zst \
+              --repo "$GITHUB_REPOSITORY"
+          fi
       - name: Verify Linux package
         if: steps.check.outcome == 'success' && (steps.check.outputs.update_needed == 'true' || inputs.force)
         env:
@@ -94,7 +104,6 @@ jobs:
           nix flake check
           if [ "$PACKAGE" = codex ]; then
             nix build .#codex --no-link
-            nix build .#codex-node --no-link
           else
             nix build .#obsidian --no-link
           fi

@@ -1,24 +1,5 @@
-use common.nu [require-command]
-
-# This is intentionally called only by an apply/update job. Checking versions
-# must never download release binaries.
-export def fetch-hash [url: string] {
-  require-command nix
-  let result = (^nix store prefetch-file --json --no-pretty $url | complete)
-  if $result.exit_code != 0 { error make ($result.stderr | str trim) }
-  let hash = ($result.stdout | from json | get hash)
-  if ($hash | is-empty) { error make $"No hash returned for ($url)" }
-  $hash
-}
-
 export def replace-version [content: string, version: string] {
   $content | str replace --regex 'version = "[^"]+"' $"version = \"($version)\""
-}
-
-export def npm-integrity [package: string, version: string] {
-  let encoded = ($package | str replace "/" "%2F")
-  let metadata = (http get $"https://registry.npmjs.org/($encoded)")
-  $metadata | get versions | get $version | get dist | get integrity
 }
 
 export def replace-binding-hash [content: string, binding: string, hash: string] {
