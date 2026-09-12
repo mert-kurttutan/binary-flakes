@@ -1,0 +1,6 @@
+.release-assets/
+result
+result-*
+.direnv/
+.git-local/
+*.swp

@@ -1,0 +1,42 @@
+name: Watch binary releases
+
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Optional version to inspect for both packages"
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        package: [codex, obsidian]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Nushell
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq nushell
+      - name: Check ${{ matrix.package }}
+        env:
+          REQUESTED_VERSION: ${{ inputs.version }}
+        run: |
+          if [ -n "$REQUESTED_VERSION" ]; then
+            nu scripts/update.nu --package "${{ matrix.package }}" --version "$REQUESTED_VERSION" --check
+          else
+            nu scripts/update.nu --package "${{ matrix.package }}" --check
+          fi
+
+      - name: Explain deferred asset refresh
+        if: always()
+        run: |
+          echo "A detected update is intentionally not applied here."
+          echo "Hash refresh, zstd repacking, and builds belong to the later asset job."
+
+  # Asset downloads, zstd repacking, hash refresh, and builds are intentionally
+  # a later, explicitly-triggered job. The watcher above remains metadata-only.
