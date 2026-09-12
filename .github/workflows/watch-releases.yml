@@ -1,42 +1,111 @@
-name: Watch binary releases
+name: Watch and release binary assets
 
 on:
   schedule:
     - cron: "17 * * * *"
   workflow_dispatch:
     inputs:
+      package:
+        description: "Package to refresh"
+        type: choice
+        options: [all, codex, obsidian]
+        default: all
       version:
-        description: "Optional version to inspect for both packages"
+        description: "Version override (select one package)"
         required: false
+      force:
+        description: "Backfill an unpublished current version"
+        type: boolean
+        default: false
 
 permissions:
-  contents: read
+  contents: write
+  pull-requests: write
 
 jobs:
-  check:
+  release:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         package: [codex, obsidian]
+    concurrency:
+      group: release-${{ matrix.package }}
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v31
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
       - name: Install Nushell
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq nushell
-      - name: Check ${{ matrix.package }}
+        run: nix profile install nixpkgs#nushell
+      - name: Check upstream release
+        id: check
+        if: github.event_name == 'schedule' || inputs.package == 'all' || inputs.package == matrix.package
         env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REQUESTED_VERSION: ${{ inputs.version }}
+          SELECTED_PACKAGE: ${{ inputs.package }}
+          PACKAGE: ${{ matrix.package }}
         run: |
-          if [ -n "$REQUESTED_VERSION" ]; then
-            nu scripts/update.nu --package "${{ matrix.package }}" --version "$REQUESTED_VERSION" --check
-          else
-            nu scripts/update.nu --package "${{ matrix.package }}" --check
+          set -euo pipefail
+          if [ -n "$REQUESTED_VERSION" ] && [ "$SELECTED_PACKAGE" = "all" ]; then
+            echo "Choose one package when overriding the version" >&2
+            exit 1
           fi
-
-      - name: Explain deferred asset refresh
-        if: always()
+          if [ -n "$REQUESTED_VERSION" ]; then
+            nu scripts/check-updates.nu --package "$PACKAGE" --version "$REQUESTED_VERSION" | tee -a "$GITHUB_OUTPUT"
+          else
+            nu scripts/check-updates.nu --package "$PACKAGE" | tee -a "$GITHUB_OUTPUT"
+          fi
+      - name: Download and compress release assets
+        if: steps.check.outcome == 'success' && (steps.check.outputs.update_needed == 'true' || inputs.force)
+        env:
+          PACKAGE: ${{ matrix.package }}
+          VERSION: ${{ steps.check.outputs.new_version }}
         run: |
-          echo "A detected update is intentionally not applied here."
-          echo "Hash refresh, zstd repacking, and builds belong to the later asset job."
+          set -euo pipefail
+          nu scripts/repack-release.nu "$PACKAGE" --version "$VERSION"
+          nu scripts/update.nu --package "$PACKAGE" --version "$VERSION"
+          nix-instantiate --parse codex.nix >/dev/null
+          nix-instantiate --parse obsidian.nix >/dev/null
+      - name: Publish compressed assets
+        if: steps.check.outcome == 'success' && (steps.check.outputs.update_needed == 'true' || inputs.force)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PACKAGE: ${{ matrix.package }}
+          VERSION: ${{ steps.check.outputs.new_version }}
+        run: |
+          set -euo pipefail
+          tag="$PACKAGE-v$VERSION"
+          if ! gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release create "$tag" --repo "$GITHUB_REPOSITORY" --title "$tag" --notes "zstd-compressed $PACKAGE $VERSION binaries"
+          fi
+          gh release upload "$tag" .release-assets/*.zst --repo "$GITHUB_REPOSITORY"
+      - name: Verify Linux package
+        if: steps.check.outcome == 'success' && (steps.check.outputs.update_needed == 'true' || inputs.force)
+        env:
+          PACKAGE: ${{ matrix.package }}
+        run: |
+          set -euo pipefail
+          nix flake check
+          if [ "$PACKAGE" = codex ]; then
+            nix build .#codex --no-link
+            nix build .#codex-node --no-link
+          else
+            nix build .#obsidian --no-link
+          fi
+      - name: Open package update PR
+        if: steps.check.outcome == 'success' && (steps.check.outputs.update_needed == 'true' || inputs.force)
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: update-${{ matrix.package }}-${{ steps.check.outputs.new_version }}
+          delete-branch: true
+          commit-message: "chore: update ${{ matrix.package }} to ${{ steps.check.outputs.new_version }}"
+          title: "Update ${{ matrix.package }} to ${{ steps.check.outputs.new_version }}"
+          body: |
+            Updates the package to use the zstd-compressed assets published in this repository's ${{ matrix.package }}-v${{ steps.check.outputs.new_version }} release.
 
-  # Asset downloads, zstd repacking, hash refresh, and builds are intentionally
-  # a later, explicitly-triggered job. The watcher above remains metadata-only.
+            Linux x86_64 builds and flake checks passed in the release workflow.

@@ -6,27 +6,27 @@ let
   version = "1.13.7";
   sources = {
     x86_64-linux = {
-      asset = "obsidian-${version}.tar.gz";
-      hash = "sha256-08vjdcv6QCTbGRC5gZFkn0E0xcSK7l5gtudxOYfc2yg=";
+      asset = "obsidian-linux-x86_64.tar.zst";
+      hash = "sha256-BRVvCaHqwLxnc3rqBMgv78cZlIQF2KlSp0gC5dpyaYs=";
     };
     aarch64-linux = {
-      asset = "obsidian-${version}-arm64.tar.gz";
-      hash = "sha256-mKrDTR8TKjXPUG/D+hltWV3N7v3r1EsMxfqqehohDeI=";
+      asset = "obsidian-linux-aarch64.tar.zst";
+      hash = "sha256-SxrIWZqidpp+7AxxVib0ajaODmXTNGwOuJYbwj1xa0s=";
     };
   };
   source = sources.${stdenv.hostPlatform.system} or (throw "Unsupported system: ${stdenv.hostPlatform.system}");
   src = fetchurl {
-    url = "https://github.com/obsidianmd/obsidian-releases/releases/download/v${version}/${source.asset}";
+    url = "https://github.com/mert-kurttutan/binary-flakes/releases/download/obsidian-v${version}/${source.asset}";
     hash = source.hash;
   };
 in stdenv.mkDerivation {
   pname = "obsidian";
   inherit version src;
-  nativeBuildInputs = [ autoPatchelfHook makeWrapper ];
+  nativeBuildInputs = [ autoPatchelfHook makeWrapper zstd ];
   buildInputs = [ alsa-lib atk cairo cups dbus expat glib gtk3 libdrm libX11 libXcomposite libXdamage libXext libXfixes libXrandr libxkbcommon mesa nspr nss pango ];
   unpackPhase = ''
     runHook preUnpack
-    tar -xzf $src
+    tar --zstd -xf $src
     runHook postUnpack
   '';
   installPhase = ''

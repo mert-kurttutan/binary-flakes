@@ -33,7 +33,7 @@ export def replace-binding-hash [content: string, binding: string, hash: string]
     } else { $output = ($output | append $line) }
     if $in_binding and ($line | str trim) == "else null;" { $in_binding = false }
   }
-  $output | str join "\n" | append "" | str join "\n"
+  ($output | str join "\n") + "\n"
 }
 
 export def replace-map-hash [content: string, map: string, key: string, hash: string] {
@@ -54,7 +54,7 @@ export def replace-map-hash [content: string, map: string, key: string, hash: st
       $replaced = true
       $target = false
     } else { $output = ($output | append $line) }
-    if $in_map and ($line | str trim) == "};" { $in_map = false }
+    if $in_map and ($line | str starts-with "  };") { $in_map = false }
   }
-  $output | str join "\n" | append "" | str join "\n"
+  ($output | str join "\n") + "\n"
 }

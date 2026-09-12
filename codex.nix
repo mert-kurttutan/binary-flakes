@@ -31,25 +31,25 @@ let
     "aarch64-unknown-linux-musl" = "sha256-/U86GHAS1WXtjb89tlr68Hv+9ctIDYky4voY1k8QzTM=";
   };
   nodeOptionalDepHashes = {
-    "darwin-arm64" = "sha256-KphmLXkxalmZPHIz4+JaGqHULaS0WQRYXTOlp9ocreE=";
-    "darwin-x64" = "sha256-ksSTUzxTxDPE2UJSJR2rpPN5zLoGqZZNJgq7R6U13OE=";
-    "linux-x64" = "sha256-4nyDpJ5gMWhe5/lWwSqtXxZITTqAGB3T/qkw+5azgys=";
-    "linux-arm64" = "sha256-ojFbX2S/6v95tx4NNVBbqMIswelsq53JULYUyAQQWyQ=";
+    "darwin-arm64" = "sha256-xCxsv2nP0TgGXVresQoH8TbytylUaKbR6+nR+3dpxGI=";
+    "darwin-x64" = "sha256-bjl7UOrUu1DSYYIljogcUyYI1+yb74YaPYZ3q9rjS/Q=";
+    "linux-x64" = "sha256-TMWlMqLERz9EHUXkxwwfq4FyvK8mmTjViki1vpfW46M=";
+    "linux-arm64" = "sha256-RDh82LEWJhzjZWx97uj8fVa0A4lniytOqIap3wtqsBU=";
   };
   native = if runtime == "native" && platform != null then fetchurl {
-    url = "https://github.com/openai/codex/releases/download/rust-v${version}/codex-${platform}.zst";
+    url = "https://github.com/mert-kurttutan/binary-flakes/releases/download/codex-v${version}/codex-${platform}.zst";
     hash = nativeHashes.${platform};
   } else null;
   host = if runtime == "native" && platform != null then fetchurl {
-    url = "https://github.com/openai/codex/releases/download/rust-v${version}/codex-code-mode-host-${platform}.zst";
+    url = "https://github.com/mert-kurttutan/binary-flakes/releases/download/codex-v${version}/codex-code-mode-host-${platform}.zst";
     hash = codeModeHostHashes.${platform};
   } else null;
   npm = if runtime == "node" then fetchurl {
-    url = "https://registry.npmjs.org/@openai/codex/-/codex-${version}.tgz";
-    hash = "sha256-hwZj1OZQQt01gwXpaiKvWHCKKDF81OdKhaqGfGn1hZs=";
+    url = "https://github.com/mert-kurttutan/binary-flakes/releases/download/codex-v${version}/codex-npm-${version}.tar.zst";
+    hash = "sha256-NY8CG7i2QW1s88Db/tappYszAg750GQK3VtFhG3noMQ=";
   } else null;
   optionalDep = if runtime == "node" && nodePlatform != null then fetchurl {
-    url = "https://github.com/openai/codex/releases/download/rust-v${version}/codex-npm-${nodePlatform}-${version}.tgz";
+    url = "https://github.com/mert-kurttutan/binary-flakes/releases/download/codex-v${version}/codex-npm-${nodePlatform}-${version}.tar.zst";
     hash = nodeOptionalDepHashes.${nodePlatform};
   } else null;
   runtimeConfig = {
@@ -60,7 +60,7 @@ let
       binName = nativeBinName;
     };
     node = {
-      nativeBuildInputs = [ nodejs_22 cacert makeWrapper ];
+      nativeBuildInputs = [ nodejs_22 cacert makeWrapper zstd ];
       buildInputs = [];
       description = "OpenAI Codex CLI (Node.js)";
       binName = nodeBinName;
@@ -88,10 +88,10 @@ stdenv.mkDerivation {
   '' else ''
     export HOME=$TMPDIR
     mkdir -p $out/lib/node_modules/@openai
-    tar -xzf ${npm} -C $out/lib/node_modules/@openai
+    tar --zstd -xf ${npm} -C $out/lib/node_modules/@openai
     mv $out/lib/node_modules/@openai/package $out/lib/node_modules/@openai/codex
     ${lib.optionalString (optionalDep != null) ''
-      tar -xzf ${optionalDep} -C $out/lib/node_modules/@openai
+      tar --zstd -xf ${optionalDep} -C $out/lib/node_modules/@openai
       mv $out/lib/node_modules/@openai/package $out/lib/node_modules/@openai/codex-${nodePlatform}
     ''}
   '';

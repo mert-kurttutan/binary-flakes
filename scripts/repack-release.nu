@@ -2,33 +2,62 @@
 
 use lib/common.nu [require-command]
 
-# Explicitly opt-in: this command downloads upstream binaries and is not used
-# by metadata-only update checks. It creates reproducible tar.zst assets for a
-# release in this flake's repository.
-const OBSIDIAN_REPO = "obsidianmd/obsidian-releases"
+const NATIVE = [aarch64-apple-darwin x86_64-apple-darwin x86_64-unknown-linux-musl aarch64-unknown-linux-musl]
+const NODE = [darwin-arm64 darwin-x64 linux-x64 linux-arm64]
+
+def download [url: string, destination: string] {
+  ^curl --fail --location --retry 3 --show-error --silent $url --output $destination
+}
+
+def repack-tar [source: string, destination: string, work: string] {
+  mkdir $work
+  ^tar -xzf $source -C $work
+  ^tar -cf - -C $work --sort=name --owner=0 --group=0 --numeric-owner --mtime="UTC 1970-01-01" . | ^zstd -9 --threads=0 --force -o $destination
+  ^tar --zstd -tf $destination | ignore
+}
 
 def main [
   package: string
   --version: string
   --output-dir: string = ".release-assets"
-  --repository: string = ""
 ] {
-  require-command curl; require-command gh; require-command mktemp; require-command tar; require-command zstd
-  if $package != "obsidian" { error make "Only obsidian repacking is configured" }
-  let target_repo = if ($repository | is-empty) { error make "Pass --repository owner/name to publish assets" } else { $repository }
+  for command in [curl tar zstd nix mktemp] { require-command $command }
+  if $version == "" { error make "Pass --version" }
+  if $package not-in [codex obsidian] { error make $"Unknown package: ($package)" }
   let output = ($output_dir | path expand)
   mkdir $output
   let work = (mktemp --directory | str trim)
-  let tag = $"v($version)"
+  mut hashes = {}
   try {
-    for pair in [[x86_64 obsidian-($version).tar.gz] [aarch64 obsidian-($version)-arm64.tar.gz]] {
-      let arch = $pair.0; let asset = $pair.1
-      let source = $"https://github.com/($OBSIDIAN_REPO)/releases/download/($tag)/($asset)"
-      ^curl --fail --location --show-error --silent $source --output $"($work)/($asset)"
-      mkdir $"($work)/($arch)"
-      ^tar --extract --gzip --file $"($work)/($asset)" --directory $"($work)/($arch)"
-      ^tar --create --file - --directory $"($work)/($arch)" --sort=name --owner=0 --group=0 --numeric-owner --mtime="UTC 1970-01-01" . | ^zstd --compress --ultra --threads=0 -19 -f -o $"($output)/obsidian-linux-($arch).tar.zst"
+    if $package == "codex" {
+      let base = $"https://github.com/openai/codex/releases/download/rust-v($version)"
+      for platform in $NATIVE {
+        for prefix in [codex codex-code-mode-host] {
+          let name = $"($prefix)-($platform).zst"
+          download $"($base)/($name)" $"($output)/($name)"
+          ^zstd --test $"($output)/($name)" | ignore
+          $hashes = ($hashes | upsert $name (^nix hash file $"($output)/($name)" | str trim))
+        }
+      }
+      let npm_name = $"codex-npm-($version).tar.zst"
+      download $"https://registry.npmjs.org/@openai/codex/-/codex-($version).tgz" $"($work)/npm.tgz"
+      repack-tar $"($work)/npm.tgz" $"($output)/($npm_name)" $"($work)/npm"
+      $hashes = ($hashes | upsert $npm_name (^nix hash file $"($output)/($npm_name)" | str trim))
+      for platform in $NODE {
+        let name = $"codex-npm-($platform)-($version)"
+        download $"($base)/($name).tgz" $"($work)/($name).tgz"
+        repack-tar $"($work)/($name).tgz" $"($output)/($name).tar.zst" $"($work)/($platform)"
+        $hashes = ($hashes | upsert $"($name).tar.zst" (^nix hash file $"($output)/($name).tar.zst" | str trim))
+      }
+    } else {
+      let base = $"https://github.com/obsidianmd/obsidian-releases/releases/download/v($version)"
+      for item in [{arch: x86_64, source: $"obsidian-($version).tar.gz"} {arch: aarch64, source: $"obsidian-($version)-arm64.tar.gz"}] {
+        let name = $"obsidian-linux-($item.arch).tar.zst"
+        download $"($base)/($item.source)" $"($work)/($item.source)"
+        repack-tar $"($work)/($item.source)" $"($output)/($name)" $"($work)/($item.arch)"
+        $hashes = ($hashes | upsert $name (^nix hash file $"($output)/($name)" | str trim))
+      }
     }
+    {package: $package, version: $version, hashes: $hashes} | to json | save --force $"($output)/manifest.json"
   } finally { rm --recursive --force $work }
-  print $"Created assets in ($output). Publish them with: gh release upload v($version) ($output)/*.tar.zst --repo ($target_repo)"
 }
