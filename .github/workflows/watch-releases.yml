@@ -10,7 +10,7 @@ on:
       package:
         description: "Package to refresh"
         type: choice
-        options: [all, codex, obsidian, zed]
+        options: [all, codex, obsidian, zed, proton-pass-cli]
         default: all
       version:
         description: "Version override (select one package)"
@@ -30,7 +30,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        package: [codex, obsidian, zed]
+        package: [codex, obsidian, zed, proton-pass-cli]
     concurrency:
       group: release-${{ matrix.package }}
       cancel-in-progress: false
@@ -73,6 +73,7 @@ jobs:
           nix-instantiate --parse packages/codex/package.nix >/dev/null
           nix-instantiate --parse packages/obsidian/package.nix >/dev/null
           nix-instantiate --parse packages/zed/package.nix >/dev/null
+          nix-instantiate --parse packages/proton-pass-cli/package.nix >/dev/null
       - name: Publish compressed assets
         if: steps.check.outcome == 'success' && (steps.check.outputs.update_needed == 'true' || inputs.force)
         env:
@@ -95,10 +96,15 @@ jobs:
               .release-assets/obsidian-linux-x86_64.tar.zst \
               .release-assets/obsidian-linux-aarch64.tar.zst \
               --repo "$GITHUB_REPOSITORY"
-          else
+          elif [ "$PACKAGE" = zed ]; then
             gh release upload "$tag" \
               .release-assets/zed-linux-x86_64.tar.zst \
               .release-assets/zed-linux-aarch64.tar.zst \
+              --repo "$GITHUB_REPOSITORY"
+          else
+            gh release upload "$tag" \
+              .release-assets/pass-cli-linux-x86_64.zst \
+              .release-assets/pass-cli-linux-aarch64.zst \
               --repo "$GITHUB_REPOSITORY"
           fi
       - name: Verify Linux package
@@ -112,8 +118,10 @@ jobs:
             nix build .#codex --no-link
           elif [ "$PACKAGE" = obsidian ]; then
             nix build .#obsidian --no-link
-          else
+          elif [ "$PACKAGE" = zed ]; then
             nix build .#zed --no-link
+          else
+            nix build .#proton-pass-cli --no-link
           fi
       - name: Open package update PR
         if: steps.check.outcome == 'success' && (steps.check.outputs.update_needed == 'true' || inputs.force)

@@ -1,7 +1,7 @@
 #!/usr/bin/env nu
 
 use lib/common.nu [require-command]
-use lib/packages.nu [package-config tar-sources]
+use lib/packages.nu [package-config tar-sources binary-sources]
 
 const CODEX_PLATFORM = "x86_64-unknown-linux-musl"
 
@@ -36,6 +36,14 @@ def main [
         download $"($base)/($name)" $"($output)/($name)"
         ^zstd --test $"($output)/($name)" | ignore
         $hashes = ($hashes | upsert $name (^nix hash file $"($output)/($name)" | str trim))
+      }
+    } else if $package == "proton-pass-cli" {
+      for item in (binary-sources $package $version) {
+        let raw = $"($work)/($item.source)"
+        download $item.url $raw
+        ^zstd -19 --quiet --force $raw -o $"($output)/($item.asset)"
+        ^zstd --test $"($output)/($item.asset)" | ignore
+        $hashes = ($hashes | upsert $item.asset (^nix hash file $"($output)/($item.asset)" | str trim))
       }
     } else {
       for item in (tar-sources $package $version) {

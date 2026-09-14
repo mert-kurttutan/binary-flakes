@@ -5,6 +5,7 @@ export def package-config [package: string] {
     codex: {file: "packages/codex/package.nix", repository: "openai/codex", prefix: "rust-v"}
     obsidian: {file: "packages/obsidian/package.nix", repository: "obsidianmd/obsidian-releases", prefix: "v"}
     zed: {file: "packages/zed/package.nix", repository: "zed-industries/zed", prefix: "v"}
+    proton-pass-cli: {file: "packages/proton-pass-cli/package.nix", repository: "protonpass/pass-cli", prefix: "v"}
   }
   if $package not-in ($config | columns) { error make $"Unknown package: ($package)" }
   $config | get $package
@@ -42,5 +43,20 @@ export def tar-sources [package: string, version: string] {
     }
   } else {
     error make $"No tarball sources configured for ($package)"
+  }
+}
+
+export def binary-sources [package: string, version: string] {
+  if $package == "proton-pass-cli" {
+    [x86_64 aarch64] | each {|arch|
+      {
+        arch: $arch
+        source: $"pass-cli-linux-($arch)"
+        asset: $"pass-cli-linux-($arch).zst"
+        url: $"https://proton.me/download/pass-cli/($version)/pass-cli-linux-($arch)"
+      }
+    }
+  } else {
+    error make $"No binary sources configured for ($package)"
   }
 }

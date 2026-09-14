@@ -27,7 +27,7 @@ jobs:
         run: |
           set -euo pipefail
           nix flake check
-          nix build .#obsidian .#zed --no-link
+          nix build .#obsidian .#zed .#proton-pass-cli --no-link
           if [ "$RUNNER_ARCH" = X64 ]; then
             nix build .#codex --no-link
           fi

@@ -12,6 +12,7 @@
       overlay = final: prev: {
         obsidian = final.callPackage ./packages/obsidian/package.nix { };
         zed = final.callPackage ./packages/zed/package.nix { };
+        proton-pass-cli = final.callPackage ./packages/proton-pass-cli/package.nix { };
       } // prev.lib.optionalAttrs (prev.stdenv.hostPlatform.system == "x86_64-linux") {
         codex = final.callPackage ./packages/codex/package.nix { };
       };
@@ -28,6 +29,7 @@
           default = if system == "x86_64-linux" then pkgs.codex else pkgs.obsidian;
           obsidian = pkgs.obsidian;
           zed = pkgs.zed;
+          proton-pass-cli = pkgs.proton-pass-cli;
         } // pkgs.lib.optionalAttrs (system == "x86_64-linux") { codex = pkgs.codex; };
 
         apps = {
@@ -37,6 +39,7 @@
             { type = "app"; program = "${pkgs.obsidian}/bin/obsidian"; };
           obsidian = { type = "app"; program = "${pkgs.obsidian}/bin/obsidian"; };
           zed = { type = "app"; program = "${pkgs.zed}/bin/zed"; };
+          proton-pass-cli = { type = "app"; program = "${pkgs.proton-pass-cli}/bin/pass-cli"; };
         } // pkgs.lib.optionalAttrs (system == "x86_64-linux") {
           codex = { type = "app"; program = "${pkgs.codex}/bin/codex"; };
         };

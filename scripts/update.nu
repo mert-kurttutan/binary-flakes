@@ -1,7 +1,7 @@
 #!/usr/bin/env nu
 
 use lib/common.nu [current-version ensure-repository-root]
-use lib/packages.nu [package-config target-version tar-sources]
+use lib/packages.nu [package-config target-version tar-sources binary-sources]
 use lib/nix.nu [replace-binding-hash replace-map-hash replace-version]
 
 const CODEX_PLATFORM = "x86_64-unknown-linux-musl"
@@ -30,6 +30,10 @@ def main [
   if $package == "codex" {
     $content = replace-binding-hash $content native ($manifest.hashes | get $"codex-($CODEX_PLATFORM).zst")
     $content = replace-binding-hash $content host ($manifest.hashes | get $"codex-code-mode-host-($CODEX_PLATFORM).zst")
+  } else if $package == "proton-pass-cli" {
+    for item in (binary-sources $package $target) {
+      $content = replace-map-hash $content sources $"($item.arch)-linux" ($manifest.hashes | get $item.asset)
+    }
   } else {
     for item in (tar-sources $package $target) {
       $content = replace-map-hash $content sources $"($item.arch)-linux" ($manifest.hashes | get $item.asset)
