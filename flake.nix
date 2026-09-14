@@ -10,10 +10,10 @@
     let
       supportedSystems = [ "x86_64-linux" "aarch64-linux" ];
       overlay = final: prev: {
-        obsidian = final.callPackage ./obsidian.nix { };
-        zed = final.callPackage ./zed.nix { };
+        obsidian = final.callPackage ./packages/obsidian/package.nix { };
+        zed = final.callPackage ./packages/zed/package.nix { };
       } // prev.lib.optionalAttrs (prev.stdenv.hostPlatform.system == "x86_64-linux") {
-        codex = final.callPackage ./codex.nix { };
+        codex = final.callPackage ./packages/codex/package.nix { };
       };
     in
     flake-utils.lib.eachSystem supportedSystems (system:

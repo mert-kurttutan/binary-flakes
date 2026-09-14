@@ -70,9 +70,9 @@ jobs:
           set -euo pipefail
           nu scripts/repack-release.nu "$PACKAGE" --version "$VERSION"
           nu scripts/update.nu --package "$PACKAGE" --version "$VERSION"
-          nix-instantiate --parse codex.nix >/dev/null
-          nix-instantiate --parse obsidian.nix >/dev/null
-          nix-instantiate --parse zed.nix >/dev/null
+          nix-instantiate --parse packages/codex/package.nix >/dev/null
+          nix-instantiate --parse packages/obsidian/package.nix >/dev/null
+          nix-instantiate --parse packages/zed/package.nix >/dev/null
       - name: Publish compressed assets
         if: steps.check.outcome == 'success' && (steps.check.outputs.update_needed == 'true' || inputs.force)
         env:

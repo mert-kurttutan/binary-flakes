@@ -21,12 +21,9 @@ let
 in stdenv.mkDerivation {
   pname = "zed";
   inherit version src;
-  dontUnpack = true;
   nativeBuildInputs = [ autoPatchelfHook gnutar makeWrapper zstd ];
-  buildInputs = [
-    alsa-lib fontconfig glib libxkbcommon openssl stdenv.cc.cc
-    vulkan-loader wayland libx11 libxcb
-  ];
+  buildInputs = [ alsa-lib fontconfig glib libxkbcommon openssl stdenv.cc.cc vulkan-loader wayland libx11 libxcb ];
+  dontUnpack = true;
   buildPhase = ''
     runHook preBuild
     mkdir -p build
@@ -41,9 +38,7 @@ in stdenv.mkDerivation {
     zed_bin=$(find $out/opt/zed -type f -name zed -perm -u+x | head -n 1)
     test -n "$zed_bin"
     makeWrapper "$zed_bin" "$out/bin/zed" \
-      --prefix LD_LIBRARY_PATH : ${lib.makeLibraryPath [
-        vulkan-loader wayland glib libxkbcommon libx11 libxcb
-      ]}
+      --prefix LD_LIBRARY_PATH : ${lib.makeLibraryPath [ vulkan-loader wayland glib libxkbcommon libx11 libxcb ]}
     runHook postInstall
   '';
   meta = with lib; {

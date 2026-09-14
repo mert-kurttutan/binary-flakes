@@ -2,9 +2,9 @@ use github.nu [latest-manifest-version latest-tag]
 
 export def package-config [package: string] {
   let config = {
-    codex: {file: "codex.nix", repository: "openai/codex", prefix: "rust-v"}
-    obsidian: {file: "obsidian.nix", repository: "obsidianmd/obsidian-releases", prefix: "v"}
-    zed: {file: "zed.nix", repository: "zed-industries/zed", prefix: "v"}
+    codex: {file: "packages/codex/package.nix", repository: "openai/codex", prefix: "rust-v"}
+    obsidian: {file: "packages/obsidian/package.nix", repository: "obsidianmd/obsidian-releases", prefix: "v"}
+    zed: {file: "packages/zed/package.nix", repository: "zed-industries/zed", prefix: "v"}
   }
   if $package not-in ($config | columns) { error make $"Unknown package: ($package)" }
   $config | get $package
