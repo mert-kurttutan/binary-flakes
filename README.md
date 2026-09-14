@@ -14,15 +14,16 @@ Obsidian, Zed, and Proton Pass target `x86_64-linux` and `aarch64-linux`; Codex 
 `x86_64-linux`. The default package is Codex on x86_64 and Obsidian on
 aarch64.
 
-The hourly workflow checks Codex, Obsidian, Zed, and Proton Pass independently with Nushell. For
+The hourly workflow checks Codex, Obsidian, Zed, and Proton Pass independently with Nushell. On
+pushes to `main`, the build workflow calls the release workflow and waits for it before building.
+For
 each new version it downloads upstream assets, publishes zstd-compressed files
 to this repository's `PACKAGE-vVERSION` GitHub release,
 updates hashes in the package definition, verifies Linux builds, and opens an
 update pull request. Codex's two native assets are already zstd-compressed
 upstream; the Obsidian and Zed tarballs are repacked as `.tar.zst`.
 
-To backfill an unpublished current version, dispatch the workflow with `force` enabled.
-To select a specific version, choose one package in the dispatch form. Locally:
+Missing releases are detected automatically by the scheduled release workflow. Locally:
 
 ```sh
 nu scripts/check-updates.nu --package codex

@@ -1,24 +1,9 @@
 name: Watch and release binary assets
 
 on:
-  push:
-    branches: [main]
   schedule:
     - cron: "17 * * * *"
-  workflow_dispatch:
-    inputs:
-      package:
-        description: "Package to refresh"
-        type: choice
-        options: [all, codex, obsidian, zed, proton-pass-cli]
-        default: all
-      version:
-        description: "Version override (select one package)"
-        required: false
-      force:
-        description: "Backfill an unpublished current version"
-        type: boolean
-        default: false
+  workflow_call:
 
 permissions:
   contents: write
@@ -44,25 +29,21 @@ jobs:
         run: nix profile install nixpkgs#nushell
       - name: Check upstream release
         id: check
-        if: github.event_name != 'workflow_dispatch' || inputs.package == 'all' || inputs.package == matrix.package
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REQUESTED_VERSION: ${{ inputs.version }}
-          SELECTED_PACKAGE: ${{ inputs.package }}
           PACKAGE: ${{ matrix.package }}
         run: |
           set -euo pipefail
-          if [ -n "$REQUESTED_VERSION" ] && [ "$SELECTED_PACKAGE" = "all" ]; then
-            echo "Choose one package when overriding the version" >&2
-            exit 1
-          fi
-          if [ -n "$REQUESTED_VERSION" ]; then
-            nu scripts/check-updates.nu --package "$PACKAGE" --version "$REQUESTED_VERSION" | tee -a "$GITHUB_OUTPUT"
+          check_output="$(nu scripts/check-updates.nu --package "$PACKAGE")"
+          printf '%s\n' "$check_output" | tee -a "$GITHUB_OUTPUT"
+          version="$(printf '%s\n' "$check_output" | awk -F= '$1 == "new_version" { print $2 }')"
+          if gh release view "$PACKAGE-v$version" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "release_missing=false" >> "$GITHUB_OUTPUT"
           else
-            nu scripts/check-updates.nu --package "$PACKAGE" | tee -a "$GITHUB_OUTPUT"
+            echo "release_missing=true" >> "$GITHUB_OUTPUT"
           fi
       - name: Download and compress release assets
-        if: steps.check.outcome == 'success' && (steps.check.outputs.update_needed == 'true' || inputs.force)
+        if: steps.check.outcome == 'success' && (steps.check.outputs.update_needed == 'true' || steps.check.outputs.release_missing == 'true')
         env:
           PACKAGE: ${{ matrix.package }}
           VERSION: ${{ steps.check.outputs.new_version }}
@@ -75,7 +56,7 @@ jobs:
           nix-instantiate --parse packages/zed/package.nix >/dev/null
           nix-instantiate --parse packages/proton-pass-cli/package.nix >/dev/null
       - name: Publish compressed assets
-        if: steps.check.outcome == 'success' && (steps.check.outputs.update_needed == 'true' || inputs.force)
+        if: steps.check.outcome == 'success' && (steps.check.outputs.update_needed == 'true' || steps.check.outputs.release_missing == 'true')
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PACKAGE: ${{ matrix.package }}
@@ -108,7 +89,7 @@ jobs:
               --repo "$GITHUB_REPOSITORY"
           fi
       - name: Verify Linux package
-        if: steps.check.outcome == 'success' && (steps.check.outputs.update_needed == 'true' || inputs.force)
+        if: steps.check.outcome == 'success' && (steps.check.outputs.update_needed == 'true' || steps.check.outputs.release_missing == 'true')
         env:
           PACKAGE: ${{ matrix.package }}
         run: |
@@ -124,7 +105,7 @@ jobs:
             nix build .#proton-pass-cli --no-link
           fi
       - name: Open package update PR
-        if: steps.check.outcome == 'success' && (steps.check.outputs.update_needed == 'true' || inputs.force)
+        if: steps.check.outcome == 'success' && (steps.check.outputs.update_needed == 'true' || steps.check.outputs.release_missing == 'true')
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
