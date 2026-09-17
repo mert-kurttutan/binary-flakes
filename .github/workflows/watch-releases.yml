@@ -68,26 +68,33 @@ jobs:
           if ! gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release create "$tag" --repo "$GITHUB_REPOSITORY" --title "$tag" --notes "zstd-compressed $PACKAGE $VERSION binaries"
           fi
+
+          upload_if_missing() {
+            local asset="$1"
+            local asset_name="${asset##*/}"
+            if gh release view "$tag" \
+                --repo "$GITHUB_REPOSITORY" \
+                --json assets \
+                --jq '.assets[].name' |
+                grep -Fqx "$asset_name"; then
+              echo "Asset already exists: $asset"
+            else
+              gh release upload "$tag" "$asset" --repo "$GITHUB_REPOSITORY"
+            fi
+          }
+
           if [ "$PACKAGE" = codex ]; then
-            gh release upload "$tag" \
-              .release-assets/codex-x86_64-unknown-linux-musl.zst \
-              .release-assets/codex-code-mode-host-x86_64-unknown-linux-musl.zst \
-              --repo "$GITHUB_REPOSITORY"
+            upload_if_missing .release-assets/codex-x86_64-unknown-linux-musl.zst
+            upload_if_missing .release-assets/codex-code-mode-host-x86_64-unknown-linux-musl.zst
           elif [ "$PACKAGE" = obsidian ]; then
-            gh release upload "$tag" \
-              .release-assets/obsidian-linux-x86_64.tar.zst \
-              .release-assets/obsidian-linux-aarch64.tar.zst \
-              --repo "$GITHUB_REPOSITORY"
+            upload_if_missing .release-assets/obsidian-linux-x86_64.tar.zst
+            upload_if_missing .release-assets/obsidian-linux-aarch64.tar.zst
           elif [ "$PACKAGE" = zed ]; then
-            gh release upload "$tag" \
-              .release-assets/zed-linux-x86_64.tar.zst \
-              .release-assets/zed-linux-aarch64.tar.zst \
-              --repo "$GITHUB_REPOSITORY"
+            upload_if_missing .release-assets/zed-linux-x86_64.tar.zst
+            upload_if_missing .release-assets/zed-linux-aarch64.tar.zst
           else
-            gh release upload "$tag" \
-              .release-assets/pass-cli-linux-x86_64.zst \
-              .release-assets/pass-cli-linux-aarch64.zst \
-              --repo "$GITHUB_REPOSITORY"
+            upload_if_missing .release-assets/pass-cli-linux-x86_64.zst
+            upload_if_missing .release-assets/pass-cli-linux-aarch64.zst
           fi
       - name: Verify Linux package
         if: steps.check.outcome == 'success' && (steps.check.outputs.update_needed == 'true' || steps.check.outputs.release_missing == 'true')
