@@ -1,7 +1,7 @@
 # Binary size reduction
 
-This repository republishes upstream Linux binaries in zstd-compressed release
-assets. The benchmark compares the size of each upstream delivery artifact with
+This repository republishes upstream Linux binaries in zstd level 19-compressed
+release assets. The benchmark compares the size of each upstream delivery artifact with
 the corresponding artifact produced by `repack-release.nu`.
 
 Codex is excluded because its upstream files are already zstd-compressed.
