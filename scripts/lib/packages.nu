@@ -34,27 +34,34 @@ export def target-version [package: string, override: string = ""] {
 }
 
 export def tar-sources [package: string, version: string] {
+  let _input = $in
   match $package {
     "zed" => {
-      [x86_64 aarch64] | each {|arch|
-        {
+      mut sources = []
+      for arch in [x86_64 aarch64] {
+        let entry = {
           arch: $arch
           source: $"zed-linux-($arch).tar.gz"
           asset: $"zed-linux-($arch).tar.zst"
           url: $"https://github.com/zed-industries/zed/releases/download/v($version)/zed-linux-($arch).tar.gz"
         }
+        $sources = ($sources ++ [$entry])
       }
+      $sources
     }
     "obsidian" => {
-      [x86_64 aarch64] | each {|arch|
+      mut sources = []
+      for arch in [x86_64 aarch64] {
         let source = if $arch == "x86_64" { $"obsidian-($version).tar.gz" } else { $"obsidian-($version)-arm64.tar.gz" }
-        {
+        let entry = {
           arch: $arch
           source: $source
           asset: $"obsidian-linux-($arch).tar.zst"
           url: $"https://github.com/obsidianmd/obsidian-releases/releases/download/v($version)/($source)"
         }
+        $sources = ($sources ++ [$entry])
       }
+      $sources
     }
     _ => {
       error make $"No tarball sources configured for ($package)"
@@ -63,16 +70,20 @@ export def tar-sources [package: string, version: string] {
 }
 
 export def binary-sources [package: string, version: string] {
+  let _input = $in
   match $package {
     "proton-pass-cli" => {
-      [x86_64 aarch64] | each {|arch|
-        {
+      mut sources = []
+      for arch in [x86_64 aarch64] {
+        let entry = {
           arch: $arch
           source: $"pass-cli-linux-($arch)"
           asset: $"pass-cli-linux-($arch).zst"
           url: $"https://proton.me/download/pass-cli/($version)/pass-cli-linux-($arch)"
         }
+        $sources = ($sources ++ [$entry])
       }
+      $sources
     }
     _ => {
       error make $"No binary sources configured for ($package)"
@@ -81,14 +92,18 @@ export def binary-sources [package: string, version: string] {
 }
 
 export def deb-sources [package: string, version: string] {
+  let _input = $in
   match $package {
     "proton-pass" => {
-      [{
+      mut sources = []
+      let entry = {
         arch: "x86_64"
         source: $"proton-pass_($version)_amd64.deb"
         asset: "proton-pass-linux-x86_64.tar.zst"
         url: $"https://proton.me/download/pass/linux/x64/proton-pass_($version)_amd64.deb"
-      }]
+      }
+      $sources = ($sources ++ [$entry])
+      $sources
     }
     _ => {
       error make $"No deb sources configured for ($package)"
