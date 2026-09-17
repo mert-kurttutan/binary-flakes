@@ -4,12 +4,14 @@ Nix packages for prebuilt Linux binaries with automated release updates.
 
 ## Packages
 
+<!-- BEGIN PACKAGE TABLE -->
 | Package | Version | Supported systems |
 | --- | --- | --- |
 | `codex` | `0.154.0` | `x86_64-linux` |
 | `obsidian` | `1.13.7` | `x86_64-linux`, `aarch64-linux` |
-| `zed` | `1.19.2` | `x86_64-linux`, `aarch64-linux` |
+| `zed` | `1.20.2` | `x86_64-linux`, `aarch64-linux` |
 | `proton-pass-cli` | `2.3.3` | `x86_64-linux`, `aarch64-linux` |
+<!-- END PACKAGE TABLE -->
 
 Packages are built from upstream binary uploads.
 

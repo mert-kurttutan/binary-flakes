@@ -40,4 +40,5 @@ def main [
     }
   }
   $content | save --force $file
+  ^nu scripts/generate-readme.nu
 }

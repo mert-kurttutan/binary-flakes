@@ -14,3 +14,14 @@ nu scripts/update.nu --package proton-pass-cli --version 2.3.3
 The repack command writes `.release-assets/manifest.json` with hashes of the
 produced files. It does not publish a release. The manifest must exist before
 running `update.nu`.
+
+## README package table
+
+The package table in `README.md` is generated from the versions in the package
+Nix files. Run this command manually when needed:
+
+```sh
+nu scripts/generate-readme.nu
+```
+
+`scripts/update.nu` runs the generator automatically after updating a package.
