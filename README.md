@@ -11,6 +11,7 @@ Nix packages for prebuilt Linux binaries with automated release updates.
 | `obsidian` | `1.13.7` | `x86_64-linux`, `aarch64-linux` |
 | `zed` | `1.20.2` | `x86_64-linux`, `aarch64-linux` |
 | `proton-pass-cli` | `2.3.3` | `x86_64-linux`, `aarch64-linux` |
+| `proton-pass` | `1.40.2` | `x86_64-linux` |
 <!-- END PACKAGE TABLE -->
 
 Packages are built from upstream binary uploads.
@@ -21,7 +22,7 @@ Build one or more packages with Nix:
 
 ```sh
 nix build .#codex
-nix build .#obsidian .#zed .#proton-pass-cli
+nix build .#obsidian .#zed
 ```
 
 ## Automated updates

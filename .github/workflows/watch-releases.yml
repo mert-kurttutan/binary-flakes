@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        package: [codex, obsidian, zed, proton-pass-cli]
+        package: [codex, obsidian, zed, proton-pass-cli, proton-pass]
     concurrency:
       group: release-${{ matrix.package }}
       cancel-in-progress: false
@@ -56,6 +56,7 @@ jobs:
           nix-instantiate --parse packages/obsidian/package.nix >/dev/null
           nix-instantiate --parse packages/zed/package.nix >/dev/null
           nix-instantiate --parse packages/proton-pass-cli/package.nix >/dev/null
+          nix-instantiate --parse packages/proton-pass/package.nix >/dev/null
       - name: Publish compressed assets
         if: steps.check.outcome == 'success' && (steps.check.outputs.update_needed == 'true' || steps.check.outputs.release_missing == 'true')
         env:
@@ -92,6 +93,8 @@ jobs:
           elif [ "$PACKAGE" = zed ]; then
             upload_if_missing .release-assets/zed-linux-x86_64.tar.zst
             upload_if_missing .release-assets/zed-linux-aarch64.tar.zst
+          elif [ "$PACKAGE" = proton-pass ]; then
+            upload_if_missing .release-assets/proton-pass-linux-x86_64.tar.zst
           else
             upload_if_missing .release-assets/pass-cli-linux-x86_64.zst
             upload_if_missing .release-assets/pass-cli-linux-aarch64.zst
@@ -109,6 +112,8 @@ jobs:
             nix build .#obsidian --no-link
           elif [ "$PACKAGE" = zed ]; then
             nix build .#zed --no-link
+          elif [ "$PACKAGE" = proton-pass ]; then
+            nix build .#proton-pass --no-link
           else
             nix build .#proton-pass-cli --no-link
           fi

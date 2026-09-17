@@ -34,6 +34,8 @@ def main [
     for item in (binary-sources $package $target) {
       $content = replace-map-hash $content sources $"($item.arch)-linux" ($manifest.hashes | get $item.asset)
     }
+  } else if $package == "proton-pass" {
+    $content = replace-binding-hash $content src ($manifest.hashes | get "proton-pass-linux-x86_64.tar.zst")
   } else {
     for item in (tar-sources $package $target) {
       $content = replace-map-hash $content sources $"($item.arch)-linux" ($manifest.hashes | get $item.asset)

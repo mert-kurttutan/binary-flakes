@@ -1,7 +1,7 @@
 #!/usr/bin/env nu
 
 use lib/common.nu [require-command]
-use lib/packages.nu [package-config tar-sources binary-sources]
+use lib/packages.nu [package-config tar-sources binary-sources deb-sources]
 
 const CODEX_PLATFORM = "x86_64-unknown-linux-musl"
 
@@ -16,12 +16,25 @@ def repack-tar [source: string, destination: string, work: string] {
   ^tar --zstd -tf $destination | ignore
 }
 
+def repack-deb [source: string, destination: string, work: string] {
+  let archive = $"($work)/deb-archive"
+  let payload = $"($work)/payload"
+  mkdir $archive
+  mkdir $payload
+  cd $archive
+  ^ar x $source
+  let data = (glob $"($archive)/data.tar.*" | first)
+  ^tar -xf $data -C $payload
+  ^tar -cf - -C $payload --sort=name --owner=0 --group=0 --numeric-owner --mtime="UTC 1970-01-01" . | ^zstd -9 --threads=0 --force -o $destination
+  ^tar --zstd -tf $destination | ignore
+}
+
 def main [
   package: string
   --version: string
   --output-dir: string = ".release-assets"
 ] {
-  for command in [curl tar zstd nix mktemp] { require-command $command }
+  for command in [curl ar tar zstd nix mktemp] { require-command $command }
   if $version == "" { error make "Pass --version" }
   package-config $package | ignore
   let output = ($output_dir | path expand)
@@ -43,6 +56,13 @@ def main [
         download $item.url $raw
         ^zstd -19 --quiet --force $raw -o $"($output)/($item.asset)"
         ^zstd --test $"($output)/($item.asset)" | ignore
+        $hashes = ($hashes | upsert $item.asset (^nix hash file $"($output)/($item.asset)" | str trim))
+      }
+    } else if $package == "proton-pass" {
+      for item in (deb-sources $package $version) {
+        let raw = $"($work)/($item.source)"
+        download $item.url $raw
+        repack-deb $raw $"($output)/($item.asset)" $work
         $hashes = ($hashes | upsert $item.asset (^nix hash file $"($output)/($item.asset)" | str trim))
       }
     } else {

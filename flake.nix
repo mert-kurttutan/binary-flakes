@@ -13,6 +13,7 @@
         obsidian = final.callPackage ./packages/obsidian/package.nix { };
         zed = final.callPackage ./packages/zed/package.nix { };
         proton-pass-cli = final.callPackage ./packages/proton-pass-cli/package.nix { };
+        proton-pass = final.callPackage ./packages/proton-pass/package.nix { };
       } // prev.lib.optionalAttrs (prev.stdenv.hostPlatform.system == "x86_64-linux") {
         codex = final.callPackage ./packages/codex/package.nix { };
       };
@@ -30,7 +31,10 @@
           obsidian = pkgs.obsidian;
           zed = pkgs.zed;
           proton-pass-cli = pkgs.proton-pass-cli;
-        } // pkgs.lib.optionalAttrs (system == "x86_64-linux") { codex = pkgs.codex; };
+        } // pkgs.lib.optionalAttrs (system == "x86_64-linux") {
+          codex = pkgs.codex;
+          proton-pass = pkgs.proton-pass;
+        };
 
         apps = {
           default = if system == "x86_64-linux" then
@@ -42,6 +46,7 @@
           proton-pass-cli = { type = "app"; program = "${pkgs.proton-pass-cli}/bin/pass-cli"; };
         } // pkgs.lib.optionalAttrs (system == "x86_64-linux") {
           codex = { type = "app"; program = "${pkgs.codex}/bin/codex"; };
+          proton-pass = { type = "app"; program = "${pkgs.proton-pass}/bin/proton-pass"; };
         };
 
         devShells.default = pkgs.mkShell {

@@ -33,7 +33,7 @@ jobs:
           nix flake check
           nix build .#obsidian .#zed .#proton-pass-cli --no-link
           if [ "$RUNNER_ARCH" = X64 ]; then
-            nix build .#codex --no-link
+            nix build .#codex .#proton-pass --no-link
           fi
       - name: Smoke test Codex launchers
         if: matrix.runner == 'ubuntu-24.04'

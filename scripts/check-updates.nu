@@ -4,7 +4,7 @@ use lib/common.nu [current-version ensure-repository-root]
 use lib/packages.nu [package-config target-version]
 
 def main [
-  --package: string = "codex" # codex, obsidian, or zed
+  --package: string = "codex" # codex, obsidian, zed, proton-pass-cli, or proton-pass
   --version: string = ""
 ] {
   ensure-repository-root

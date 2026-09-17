@@ -7,6 +7,7 @@ const PACKAGES = [
   {name: "obsidian", file: "packages/obsidian/package.nix", systems: "`x86_64-linux`, `aarch64-linux`"}
   {name: "zed", file: "packages/zed/package.nix", systems: "`x86_64-linux`, `aarch64-linux`"}
   {name: "proton-pass-cli", file: "packages/proton-pass-cli/package.nix", systems: "`x86_64-linux`, `aarch64-linux`"}
+  {name: "proton-pass", file: "packages/proton-pass/package.nix", systems: "`x86_64-linux`"}
 ]
 
 def main [] {
