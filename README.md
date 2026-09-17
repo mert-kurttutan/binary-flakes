@@ -1,42 +1,46 @@
 # binary-flakes
 
-Nix packages for prebuilt binary releases, with release metadata and update
-automation written in modular Nushell.
+Nix packages for prebuilt Linux binaries with automated release updates.
 
-Packages currently covered:
+## Packages
 
-- `codex`: OpenAI’s native x86_64 Linux Rust binary and code-mode host (`.zst` assets)
-- `obsidian`: Linux desktop tarballs for x86_64 and aarch64
-- `zed`: Linux editor tarballs for x86_64 and aarch64
-- `proton-pass-cli`: Proton's native Linux CLI binaries, repacked as `.zst` assets
+| Package | Version | Supported systems |
+| --- | --- | --- |
+| `codex` | `0.154.0` | `x86_64-linux` |
+| `obsidian` | `1.13.7` | `x86_64-linux`, `aarch64-linux` |
+| `zed` | `1.19.2` | `x86_64-linux`, `aarch64-linux` |
+| `proton-pass-cli` | `2.3.3` | `x86_64-linux`, `aarch64-linux` |
 
-Obsidian, Zed, and Proton Pass target `x86_64-linux` and `aarch64-linux`; Codex targets only
-`x86_64-linux`. The default package is Codex on x86_64 and Obsidian on
-aarch64.
+Packages are built from upstream binary uploads.
 
-The hourly workflow checks Codex, Obsidian, Zed, and Proton Pass independently with Nushell. On
-pushes to `main`, the build workflow calls the release workflow and waits for it before building.
-For
-each new version it downloads upstream assets, publishes zstd-compressed files
-to this repository's `PACKAGE-vVERSION` GitHub release,
-updates hashes in the package definition, verifies Linux builds, and opens an
-update pull request. Codex's two native assets are already zstd-compressed
-upstream; the Obsidian and Zed tarballs are repacked as `.tar.zst`.
+## Usage
 
-Missing releases are detected automatically by the scheduled release workflow. Locally:
+Build one or more packages with Nix:
+
+```sh
+nix build .#codex
+nix build .#obsidian .#zed .#proton-pass-cli
+```
+
+## Automated updates
+
+The scheduled workflow checks upstream releases, uploads compressed assets to
+`PACKAGE-vVERSION` GitHub releases, updates hashes, verifies builds, and opens
+update pull requests.
+
+## Local updates
+
+Check for a new version without downloading binaries:
 
 ```sh
 nu scripts/check-updates.nu --package codex
-nu scripts/check-updates.nu --package proton-pass-cli
-nu scripts/repack-release.nu obsidian --version 1.13.7
-nu scripts/update.nu --package obsidian --version 1.13.7
-nu scripts/repack-release.nu zed --version 1.19.2
-nu scripts/update.nu --package zed --version 1.19.2
-nu scripts/repack-release.nu proton-pass-cli --version 2.3.3
-nu scripts/update.nu --package proton-pass-cli --version 2.3.3
+nu scripts/check-updates.nu --package zed
 ```
 
-The repack command writes `.release-assets/manifest.json` with hashes of the
-produced files. It does not publish assets itself. The workflow performs the
-release upload before Nix build verification so the flake can fetch its own
-assets. Version checks do not download binaries.
+For a package update, first repack its assets, then update the package
+definition:
+
+```sh
+nu scripts/repack-release.nu obsidian --version 1.13.7
+nu scripts/update.nu --package obsidian --version 1.13.7
+```
