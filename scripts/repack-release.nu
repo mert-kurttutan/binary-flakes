@@ -12,7 +12,7 @@ def download [url: string, destination: string] {
 def repack-tar [source: string, destination: string, work: string] {
   mkdir $work
   ^tar -xzf $source -C $work
-  ^tar -cf - -C $work --sort=name --owner=0 --group=0 --numeric-owner --mtime="UTC 1970-01-01" . | ^zstd -9 --threads=0 --force -o $destination
+  ^tar -cf - -C $work --sort=name --owner=0 --group=0 --numeric-owner --mtime="UTC 1970-01-01" . | ^zstd -19 --threads=0 --force -o $destination
   ^tar --zstd -tf $destination | ignore
 }
 
@@ -25,7 +25,7 @@ def repack-deb [source: string, destination: string, work: string] {
   ^ar x $source
   let data = (glob $"($archive)/data.tar.*" | first)
   ^tar -xf $data -C $payload
-  ^tar -cf - -C $payload --sort=name --owner=0 --group=0 --numeric-owner --mtime="UTC 1970-01-01" . | ^zstd -9 --threads=0 --force -o $destination
+  ^tar -cf - -C $payload --sort=name --owner=0 --group=0 --numeric-owner --mtime="UTC 1970-01-01" . | ^zstd -19 --threads=0 --force -o $destination
   ^tar --zstd -tf $destination | ignore
 }
 
