@@ -42,34 +42,39 @@ def main [
   let work = (mktemp --directory | str trim)
   mut hashes = {}
   try {
-    if $package == "codex" {
-      let base = $"https://github.com/openai/codex/releases/download/rust-v($version)"
-      for prefix in [codex codex-code-mode-host] {
-        let name = $"($prefix)-($CODEX_PLATFORM).zst"
-        download $"($base)/($name)" $"($output)/($name)"
-        ^zstd --test $"($output)/($name)" | ignore
-        $hashes = ($hashes | upsert $name (^nix hash file $"($output)/($name)" | str trim))
+    match $package {
+      "codex" => {
+        let base = $"https://github.com/openai/codex/releases/download/rust-v($version)"
+        for prefix in [codex codex-code-mode-host] {
+          let name = $"($prefix)-($CODEX_PLATFORM).zst"
+          download $"($base)/($name)" $"($output)/($name)"
+          ^zstd --test $"($output)/($name)" | ignore
+          $hashes = ($hashes | upsert $name (^nix hash file $"($output)/($name)" | str trim))
+        }
       }
-    } else if $package == "proton-pass-cli" {
-      for item in (binary-sources $package $version) {
-        let raw = $"($work)/($item.source)"
-        download $item.url $raw
-        ^zstd -19 --quiet --force $raw -o $"($output)/($item.asset)"
-        ^zstd --test $"($output)/($item.asset)" | ignore
-        $hashes = ($hashes | upsert $item.asset (^nix hash file $"($output)/($item.asset)" | str trim))
+      "proton-pass-cli" => {
+        for item in (binary-sources $package $version) {
+          let raw = $"($work)/($item.source)"
+          download $item.url $raw
+          ^zstd -19 --quiet --force $raw -o $"($output)/($item.asset)"
+          ^zstd --test $"($output)/($item.asset)" | ignore
+          $hashes = ($hashes | upsert $item.asset (^nix hash file $"($output)/($item.asset)" | str trim))
+        }
       }
-    } else if $package == "proton-pass" {
-      for item in (deb-sources $package $version) {
-        let raw = $"($work)/($item.source)"
-        download $item.url $raw
-        repack-deb $raw $"($output)/($item.asset)" $work
-        $hashes = ($hashes | upsert $item.asset (^nix hash file $"($output)/($item.asset)" | str trim))
+      "proton-pass" => {
+        for item in (deb-sources $package $version) {
+          let raw = $"($work)/($item.source)"
+          download $item.url $raw
+          repack-deb $raw $"($output)/($item.asset)" $work
+          $hashes = ($hashes | upsert $item.asset (^nix hash file $"($output)/($item.asset)" | str trim))
+        }
       }
-    } else {
-      for item in (tar-sources $package $version) {
-        download $item.url $"($work)/($item.source)"
-        repack-tar $"($work)/($item.source)" $"($output)/($item.asset)" $"($work)/($item.arch)"
-        $hashes = ($hashes | upsert $item.asset (^nix hash file $"($output)/($item.asset)" | str trim))
+      _ => {
+        for item in (tar-sources $package $version) {
+          download $item.url $"($work)/($item.source)"
+          repack-tar $"($work)/($item.source)" $"($output)/($item.asset)" $"($work)/($item.arch)"
+          $hashes = ($hashes | upsert $item.asset (^nix hash file $"($output)/($item.asset)" | str trim))
+        }
       }
     }
     {package: $package, version: $version, hashes: $hashes} | to json | save --force $"($output)/manifest.json"
