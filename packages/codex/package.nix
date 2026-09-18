@@ -2,15 +2,15 @@
 , installShellCompletions ? stdenv.buildPlatform.canExecute stdenv.hostPlatform
 , zstd, openssl, libcap, libz, bubblewrap }:
 let
-  version = "0.154.0";
+  version = "0.155.0";
   platform = "x86_64-unknown-linux-musl";
   native = fetchurl {
     url = "https://github.com/mert-kurttutan/binary-flakes/releases/download/codex-v${version}/codex-${platform}.zst";
-    hash = "sha256-vq5qSDBd9v0hyLOUiakA96mjVheTPuawl1vP21tUKSU=";
+    hash = "sha256-KnLTNS9euaWKYCaeszOPxai9uIBePewt+qlPRWmUFhM=";
   };
   host = fetchurl {
     url = "https://github.com/mert-kurttutan/binary-flakes/releases/download/codex-v${version}/codex-code-mode-host-${platform}.zst";
-    hash = "sha256-ZE/EprgWL43eqE7i40YcMey6de5GDu2msrdnq91m58c=";
+    hash = "sha256-wVJ5+APNIpVoql6D/W8w59sBwP2zxJQ1tYX1Ge0lDhk=";
   };
 in
 assert stdenv.hostPlatform.system == "x86_64-linux" || throw "Codex is only packaged for x86_64-linux";
