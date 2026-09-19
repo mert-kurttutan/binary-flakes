@@ -137,4 +137,4 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          gh pr merge "${{ steps.create-pr.outputs.pull-request-number }}" --auto --squash --delete-branch --repo "$GITHUB_REPOSITORY"
+          gh pr merge "${{ steps.create-pr.outputs.pull-request-number }}" --auto --squash --delete-branch
