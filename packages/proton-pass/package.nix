@@ -3,10 +3,10 @@
 , libdrm, libxkbcommon, libX11, libXcomposite, libXdamage, libXext
 , libXfixes, libXrandr, mesa, nss, pango }:
 let
-  version = "1.40.2";
+  version = "1.41.1";
   src = fetchurl {
     url = "https://github.com/mert-kurttutan/binary-flakes/releases/download/proton-pass-v${version}/proton-pass-linux-x86_64.tar.zst";
-    hash = "sha256-rNF09Kj5en2o6tTiys61+YNYJULKibP4z8JypGfWkuA=";
+    hash = "sha256-o7QTLEjW8PVV/q+RzMRz7mwfc/YrWuzeBgzqltCjWPU=";
   };
 in
 assert stdenv.hostPlatform.system == "x86_64-linux" || throw "Proton Pass Desktop is only packaged for x86_64-linux";
