@@ -29,8 +29,7 @@ def main [
   mut content = replace-version (open --raw $file) $target
   match $package {
     "codex" => {
-      $content = replace-binding-hash $content native ($manifest.hashes | get $"codex-($CODEX_PLATFORM).zst")
-      $content = replace-binding-hash $content host ($manifest.hashes | get $"codex-code-mode-host-($CODEX_PLATFORM).zst")
+      $content = replace-binding-hash $content src ($manifest.hashes | get $"codex-package-($CODEX_PLATFORM).tar.zst")
     }
     "proton-pass-cli" => {
       for item in (binary-sources $package $target) {
