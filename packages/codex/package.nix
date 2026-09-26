@@ -1,16 +1,12 @@
-{ lib, stdenv, fetchurl, makeWrapper, installShellFiles
+{ lib, stdenv, fetchurl, installShellFiles
 , installShellCompletions ? stdenv.buildPlatform.canExecute stdenv.hostPlatform
-, zstd, openssl, libcap, libz, bubblewrap }:
+, zstd }:
 let
   version = "0.157.1";
   platform = "x86_64-unknown-linux-musl";
-  native = fetchurl {
-    url = "https://github.com/mert-kurttutan/binary-flakes/releases/download/codex-v${version}/codex-${platform}.zst";
-    hash = "sha256-oD1k6RT1wDrk5WDuZ4uOr7nim7SHL6/v8ef9N65DP/g=";
-  };
-  host = fetchurl {
-    url = "https://github.com/mert-kurttutan/binary-flakes/releases/download/codex-v${version}/codex-code-mode-host-${platform}.zst";
-    hash = "sha256-46stktPascZCUX4scCf94Sf+IauQE55RBlTExc7CYhE=";
+  src = fetchurl {
+    url = "https://github.com/openai/codex/releases/download/rust-v${version}/codex-package-${platform}.tar.zst";
+    hash = "sha256-9D+bmwubY2jdyXt31Ddpba/MrKc2ANRt9bipszyKUCo=";
   };
 in
 assert stdenv.hostPlatform.system == "x86_64-linux" || throw "Codex is only packaged for x86_64-linux";
@@ -20,24 +16,10 @@ stdenv.mkDerivation {
   dontUnpack = true;
   dontPatchELF = true;
   dontStrip = true;
-  nativeBuildInputs = [ zstd makeWrapper ] ++ lib.optionals installShellCompletions [ installShellFiles ];
-  buildInputs = [ openssl libcap libz ];
-  buildPhase = ''
-    mkdir -p build
-    zstd -d ${native} -o build/codex
-    chmod +x build/codex
-    zstd -d ${host} -o build/codex-code-mode-host
-    chmod +x build/codex-code-mode-host
-  '';
+  nativeBuildInputs = [ zstd ] ++ lib.optionals installShellCompletions [ installShellFiles ];
   installPhase = ''
-    mkdir -p $out/bin $out/libexec
-    install -m755 build/codex $out/libexec/codex
-    install -m755 build/codex-code-mode-host $out/libexec/codex-code-mode-host
-    ln -s ../libexec/codex-code-mode-host $out/bin/codex-code-mode-host
-    makeWrapper $out/libexec/codex $out/bin/codex \
-      --run 'export CODEX_EXECUTABLE_PATH="$HOME/.local/bin/codex"' \
-      --set DISABLE_AUTOUPDATER 1 \
-      --prefix PATH : "${lib.makeBinPath [ bubblewrap ]}"
+    mkdir -p $out
+    tar --zstd -xf ${src} -C $out
   '';
   postInstall = lib.optionalString installShellCompletions ''
     installShellCompletion --cmd codex \

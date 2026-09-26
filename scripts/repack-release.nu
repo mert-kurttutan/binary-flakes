@@ -45,12 +45,10 @@ def main [
     match $package {
       "codex" => {
         let base = $"https://github.com/openai/codex/releases/download/rust-v($version)"
-        for prefix in [codex codex-code-mode-host] {
-          let name = $"($prefix)-($CODEX_PLATFORM).zst"
-          download $"($base)/($name)" $"($output)/($name)"
-          ^zstd --test $"($output)/($name)" | ignore
-          $hashes = ($hashes | upsert $name (^nix hash file $"($output)/($name)" | str trim))
-        }
+        let asset = $"codex-package-($CODEX_PLATFORM).tar.zst"
+        download $"($base)/($asset)" $"($output)/($asset)"
+        ^zstd --test $"($output)/($asset)" | ignore
+        $hashes = ($hashes | upsert $asset (^nix hash file $"($output)/($asset)" | str trim))
       }
       "proton-pass-cli" => {
         for item in (binary-sources $package $version) {
