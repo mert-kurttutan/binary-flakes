@@ -3,15 +3,15 @@
 , libxkbcommon, libX11, libXcomposite, libXdamage, libXext, libXfixes
 , libXrandr }:
 let
-  version = "1.13.7";
+  version = "1.14.4";
   sources = {
     x86_64-linux = {
       asset = "obsidian-linux-x86_64.tar.zst";
-      hash = "sha256-BRVvCaHqwLxnc3rqBMgv78cZlIQF2KlSp0gC5dpyaYs=";
+      hash = "sha256-vhRDsHGpvJj527MacSrigjGacP+8WQ612Wx4HV5RKk8=";
     };
     aarch64-linux = {
       asset = "obsidian-linux-aarch64.tar.zst";
-      hash = "sha256-SxrIWZqidpp+7AxxVib0ajaODmXTNGwOuJYbwj1xa0s=";
+      hash = "sha256-0PJj5tBIJPWHWDB8D42PPSKX+YCH8xl5tWIcEgIfjYU=";
     };
   };
   source = sources.${stdenv.hostPlatform.system} or (throw "Unsupported system: ${stdenv.hostPlatform.system}");
