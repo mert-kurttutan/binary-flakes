@@ -2,11 +2,11 @@
 , installShellCompletions ? stdenv.buildPlatform.canExecute stdenv.hostPlatform
 , zstd }:
 let
-  version = "0.160.1";
+  version = "0.161.0";
   platform = "x86_64-unknown-linux-musl";
   src = fetchurl {
     url = "https://github.com/openai/codex/releases/download/rust-v${version}/codex-package-${platform}.tar.zst";
-    hash = "sha256-Bfknn8+3ZWShgB3YNShqVid8Ck3ZfZT1hUPnGy7V+Aw=";
+    hash = "sha256-z+6lNAvMehn2O+5waNKwy30bPQAlSOPh5f+Mi11lLko=";
   };
 in
 assert stdenv.hostPlatform.system == "x86_64-linux" || throw "Codex is only packaged for x86_64-linux";
