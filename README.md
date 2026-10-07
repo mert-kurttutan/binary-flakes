@@ -11,7 +11,7 @@ Nix packages for prebuilt Linux binaries with automated release updates.
 | `obsidian` | `1.14.4` | `x86_64-linux`, `aarch64-linux` |
 | `zed` | `1.22.0` | `x86_64-linux`, `aarch64-linux` |
 | `proton-pass-cli` | `2.4.2` | `x86_64-linux`, `aarch64-linux` |
-| `proton-pass` | `1.41.1` | `x86_64-linux` |
+| `proton-pass` | `1.42.0` | `x86_64-linux` |
 <!-- END PACKAGE TABLE -->
 
 Packages are built from upstream binary uploads.
