@@ -2,15 +2,15 @@
 , gnutar, libxkbcommon, libx11, libxcb, makeWrapper, openssl
 , vulkan-loader, wayland, zstd }:
 let
-  version = "1.24.4";
+  version = "1.25.2";
   sources = {
     x86_64-linux = {
       asset = "zed-linux-x86_64.tar.zst";
-      hash = "sha256-wcEhAU7K8IC8t2lT+CNECaJPAENRnYfnLyoAdiJ0wg4=";
+      hash = "sha256-Z3rgtNSaXSptPGAZ66ZXW5/fSsq90lBqsXUXcbUaQQM=";
     };
     aarch64-linux = {
       asset = "zed-linux-aarch64.tar.zst";
-      hash = "sha256-cWi51UeTKreZmU8npfMfekUNbmY5/y8GTMyuuF09v2s=";
+      hash = "sha256-4P74kctahw1js03hjYb3uz4vebgp/UjSbCaulZqHqsQ=";
     };
   };
   source = sources.${stdenv.hostPlatform.system} or (throw "Unsupported system: ${stdenv.hostPlatform.system}");
