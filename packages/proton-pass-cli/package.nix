@@ -1,14 +1,14 @@
 { lib, stdenv, fetchurl, autoPatchelfHook, makeWrapper, zstd, keyutils, libgcc }:
 let
-  version = "2.5.0";
+  version = "2.5.1";
   sources = {
     x86_64-linux = {
       asset = "pass-cli-linux-x86_64.zst";
-      hash = "sha256-NHdfr3ZOk+Y27Y2/m0FPS4PX7DvNnOqjyJ2mgzYuGrA=";
+      hash = "sha256-YbSerLCasdZjZNPAKFvjOqlvEq264z6UH8ZTA2lDZKs=";
     };
     aarch64-linux = {
       asset = "pass-cli-linux-aarch64.zst";
-      hash = "sha256-2+OL/OIpOkMmFDPGAGuSXfhvjdEnOEMIaouVzZsBgIU=";
+      hash = "sha256-VoWw2G5mGs1vSY04Mv9fqVZlZ3O0anZYYyHA0lxT/II=";
     };
   };
   source = sources.${stdenv.hostPlatform.system} or (throw "Unsupported system: ${stdenv.hostPlatform.system}");
