@@ -9,7 +9,7 @@ Nix packages for prebuilt Linux binaries with automated release updates.
 | --- | --- | --- |
 | `codex` | `0.164.0` | `x86_64-linux` |
 | `obsidian` | `1.14.5` | `x86_64-linux`, `aarch64-linux` |
-| `zed` | `1.25.2` | `x86_64-linux`, `aarch64-linux` |
+| `zed` | `1.25.3` | `x86_64-linux`, `aarch64-linux` |
 | `proton-pass-cli` | `2.5.1` | `x86_64-linux`, `aarch64-linux` |
 | `proton-pass` | `1.42.0` | `x86_64-linux` |
 <!-- END PACKAGE TABLE -->
